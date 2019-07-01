@@ -11,6 +11,7 @@ public class Movement : MonoBehaviour
     private float distToGround;
     private Rigidbody rigid;
     public GameObject playerCam;
+    public bool canJump = true;
 
 
     // Use this for initialization
@@ -25,30 +26,38 @@ public class Movement : MonoBehaviour
     {
         Quaternion camRot = playerCam.transform.GetComponent<Transform>().rotation;
 
-        Vector3 force = new Vector3(Input.GetAxis("Horizontal"), 0, Input.GetAxis("Vertical"));
-        force.Normalize();
-        force = camRot * force * maxForce;
-        force = new Vector3(force.x, 0, force.z);
+        Vector3 forceV = new Vector3(Input.GetAxis("Horizontal"), 0, Input.GetAxis("Vertical"));
+        //Normalize the force vector to prevent diagonal movement speed increase exploit
+        forceV.Normalize();
+        //Add a force to the player depending on where the camera is pointing (local, not global)
+        forceV = camRot * forceV * (IsGrounded() ? maxForce : maxForce/3);
+        forceV = new Vector3(forceV.x, 0, forceV.z);
 
-        if (IsGrounded())
+        if (Input.GetKey(KeyCode.Space) && IsGrounded() && canJump)
         {
-            force *= maxForce;
-            if (Input.GetKeyDown(KeyCode.Space))
-            {
-                rigid.AddForce(new Vector3(0, jumpHeight, 0));
-                Vector3 torqueV = new Vector3(Input.GetAxis("Vertical") * torque, 0, Input.GetAxis("Horizontal") * -torque);
-                torqueV = camRot * torqueV;
-                rigid.AddTorque(torqueV);
-            }
-
+            canJump = false;
+            //Make the player jump by applying an upward force of jumpHeight
+            rigid.AddForce(new Vector3(0, jumpHeight, 0));
+            //Apply torque based on the input axes so that the player rotates when jumping
+            Vector3 torqueV = new Vector3(Input.GetAxis("Vertical") * torque, 0, Input.GetAxis("Horizontal") * -torque);
+            //Make the rotation relative to the camera, not the world
+            torqueV = camRot * torqueV;
+            rigid.AddTorque(torqueV);
+        }
+        
+        //Allows the player to jump again when the space key is released. Had problems with GetKeyDown and GetKeyUp.
+        if (!Input.GetKey(KeyCode.Space))
+        {
+            canJump = true;
         }
 
-
-        rigid.AddForce(force, ForceMode.Force);
+        //Finally add our force vector to the player
+        rigid.AddForce(forceV, ForceMode.Force);
     }
 
+    //Returns a boolean, true for if we are grounded, false otherwise
     bool IsGrounded()
     {
-        return Physics.Raycast(transform.position, -Vector3.up, distToGround + 0.1f);
+        return Physics.Raycast(transform.position, -Vector3.up, distToGround + 0.001f);
     }
 }
