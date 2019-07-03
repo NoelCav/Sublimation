@@ -8,15 +8,17 @@ public class Movement : MonoBehaviour
     public float maxForce = 20.0f;
     public float jumpHeight = 4000.0f;
     public float torque = 500f;
+
     private float distToGround;
     private Rigidbody rigid;
-    public GameObject playerCam;
-    public bool canJump = true;
+    private GameObject playerCam;
+    private bool canJump = true;
 
 
     // Use this for initialization
     void Start()
     {
+        playerCam = GameObject.FindGameObjectWithTag("MainCamera");
         rigid = GetComponent<Rigidbody>();
         distToGround = GetComponent<Collider>().bounds.extents.y;
     }
@@ -25,10 +27,11 @@ public class Movement : MonoBehaviour
     void FixedUpdate()
     {
         Quaternion camRot = playerCam.transform.GetComponent<Transform>().rotation;
-
         Vector3 forceV = new Vector3(Input.GetAxis("Horizontal"), 0, Input.GetAxis("Vertical"));
+        
         //Normalize the force vector to prevent diagonal movement speed increase exploit
         forceV.Normalize();
+        
         //Add a force to the player depending on where the camera is pointing (local, not global)
         forceV = camRot * forceV * (IsGrounded() ? maxForce : maxForce/3);
         forceV = new Vector3(forceV.x, 0, forceV.z);
@@ -36,11 +39,16 @@ public class Movement : MonoBehaviour
         if (Input.GetKey(KeyCode.Space) && IsGrounded() && canJump)
         {
             canJump = false;
+            
             //Make the player jump by applying an upward force of jumpHeight
             rigid.AddForce(new Vector3(0, jumpHeight, 0));
+            
             //Apply torque based on the input axes so that the player rotates when jumping
-            Vector3 torqueV = new Vector3(Input.GetAxis("Vertical") * torque, 0, Input.GetAxis("Horizontal") * -torque);
+            Vector3 torqueV = new Vector3(Input.GetAxis("Vertical"), 0, Input.GetAxis("Horizontal"));
+            torqueV.Normalize();
+
             //Make the rotation relative to the camera, not the world
+            torqueV = new Vector3(torqueV.x * torque, 0, torqueV.z * -torque);
             torqueV = camRot * torqueV;
             rigid.AddTorque(torqueV);
         }
