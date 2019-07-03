@@ -59,6 +59,7 @@
      <Compile Include="Assets\Scripts\Movement.cs" />
      <Compile Include="Assets\Scripts\ShatterController.cs" />
      <Compile Include="Assets\Scripts\SpawnPlayer.cs" />
+     <Compile Include="Assets\Scripts\buildMesh.cs" />
  <Reference Include="Unity.Timeline.Editor">
  <HintPath>C:/Users/NoelCav/Documents/GitHub/Sublimation/Sumblimation Alpha/Library/ScriptAssemblies/Unity.Timeline.Editor.dll</HintPath>
  </Reference>
